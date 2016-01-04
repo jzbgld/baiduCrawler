@@ -24,6 +24,11 @@ class baidu_Search:
         str = pattern4.sub(u'',str)
         return str
 
+    # parse baidu url to real url
+    def getRealUrl(self,fakeUrl):
+        res = requests.get(fakeUrl)
+        return res.url
+
     # get baidu result page counts
     def getPageCounts(self,htmlunicode):
         # <div class="nums">百度为您找到相关结果约68,900,000个</div>
@@ -66,7 +71,7 @@ class baidu_Search:
                 if (mTA):
                     title = self.rmTags(mTA.group(1))
                     abstract = self.rmTags(mTA.group(2))
-                    newsurl =mUrl.group(1)
+                    newsurl = self.getRealUrl(mUrl.group(1))
                     titles_abstracts.append((title,abstract,newsurl))
                 else:
                     titles_abstracts.append((u'没有标题',u'没有摘要',u'空链接'))
