@@ -59,13 +59,17 @@ class baidu_Search:
             # print m
             for result in m:
                 patternTA = re.compile(r'<h3 class="t"\s*>(.*?)</h3>.*?<div class="c-abstract">(.*?)</div>',re.DOTALL)
+                # patternUrl = re.compile(r'<h3 class="t"\s*><a.*?href="(.*?)".*?</a></h3>',re.MULTILINE)
+                patternUrl = re.compile(r'href.*?=.*?"(.*?)"',re.DOTALL)
                 mTA = patternTA.search(result)
+                mUrl = patternUrl.search(mTA.string)
                 if (mTA):
                     title = self.rmTags(mTA.group(1))
                     abstract = self.rmTags(mTA.group(2))
-                    titles_abstracts.append((title,abstract))
+                    newsurl =mUrl.group(1)
+                    titles_abstracts.append((title,abstract,newsurl))
                 else:
-                    titles_abstracts.append((u'没有标题',u'没有摘要'))
+                    titles_abstracts.append((u'没有标题',u'没有摘要',u'空链接'))
         else:
             print u'未匹配到标题和摘要!'
         return titles_abstracts
@@ -93,6 +97,7 @@ class baidu_Search:
                 print u"第",self.page+1,"页第",index+1,"个搜索结果..."
                 print u"标题: ",titles_abstracts[index][0]
                 print u"摘要: ",titles_abstracts[index][1]
+                print u"链接: ",titles_abstracts[index][2]
                 print "\r\n"
 
             nextPageUrl = self.getNextPageUrl(htmlunicode)
@@ -107,11 +112,11 @@ class baidu_Search:
 if __name__ == '__main__':
 
     print u"""
---------------------------------------------
-    howTo : enter "quit" to quit program
-    advert: 按下任意键来浏览,按下quit退出
---------------------------------------------
-"""
+    --------------------------------------------
+        howTo : enter "quit" to quit program
+        advert: 按下任意键来浏览,按下quit退出
+    --------------------------------------------
+    """
     myBaidu = baidu_Search()
     myBaidu.Search('红帽CloudForms 4:混合云管理的里程碑')
     # myBaidu.Search(raw_input(u'enter keyword to search: '))
