@@ -34,7 +34,7 @@ class baidu_Search:
         return str
 
     # parse baidu url to real url
-    # add exception 
+    # add exception
     def getRealUrl(self, fakeUrl):
         try:
             res = requests.get(fakeUrl, timeout=20)
@@ -167,5 +167,5 @@ if __name__ == '__main__':
     --------------------------------------------
     """
     myBaidu = baidu_Search()
-    myBaidu.Search('红帽CloudForms 4:混合云管理的里程碑')
-    # myBaidu.Search(raw_input(u'enter keyword to search: '))
+    # myBaidu.Search('红帽CloudForms 4:混合云管理的里程碑')
+    myBaidu.Search(raw_input(u'enter keyword to search: '))
