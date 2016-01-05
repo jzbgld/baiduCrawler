@@ -10,9 +10,16 @@ import sys
 
 class baidu_Search:
     def __init__(self):
+        # loop control
         self.enable = True
+        # search result page count
         self.page = 0
+        # result count
         self.count = 0
+        # define the output split
+        self.sheetSplit = 30
+        self.sheetPage = 0
+        self.maxCount = 100
 
     # remove empty tags
     def rmTags(self, str):
@@ -27,9 +34,13 @@ class baidu_Search:
         return str
 
     # parse baidu url to real url
+    # add exception 
     def getRealUrl(self, fakeUrl):
-        res = requests.get(fakeUrl)
-        return res.url
+        try:
+            res = requests.get(fakeUrl, timeout=20)
+            return res.url
+        except requests.exceptions.Timeout:
+            return fakeUrl
 
     # get baidu result page counts
     def getPageCounts(self, htmlunicode):
@@ -41,6 +52,7 @@ class baidu_Search:
             pagesCount = m.group(1)
         else:
             print u'未查询到任何结果!'
+            self.enable = False
         return pagesCount
 
     # get next page url
@@ -83,7 +95,7 @@ class baidu_Search:
             print u'未匹配到标题和摘要!'
         return titles_abstracts
 
-    # rewriter baidu search by requests
+    # rewrite baidu search by requests
     def Search(self, kw):
         # kw = kw.decode(sys.stdin.encoding).encode('utf-8')
         searchurl = 'http://www.baidu.com/' + 's?ie=utf-8&wd=' + urllib.quote(kw)
@@ -92,8 +104,8 @@ class baidu_Search:
 
         # write to excel workbook
         outputBook = xlwt.Workbook(encoding='utf-8', style_compression=0)
-        # add a new sheet
-        sheetName = 'news' + str(self.page + 1)
+        # add the first sheet
+        sheetName = 'news' + str(self.sheetPage + 1)
         outputSheet = outputBook.add_sheet(sheetName, cell_overwrite_ok=True)
         # write the first line
         outputSheet.write(0, 0, u"标题")
@@ -104,29 +116,40 @@ class baidu_Search:
         print pagesCount
 
         while self.enable:
-            print u'请按[回车键]浏览第', self.page + 1, '页内容,输入[quit]退出程序:'
-            myInput = raw_input()
-            if (myInput == 'quit'):
-                break
+            print u'正在处理第', self.page + 1, '页内容，没有更多结果程序会自动退出：'
+            # print u'请按[回车键]浏览第', self.page + 1, '页内容,输入[quit]退出程序:'
+            # myInput = raw_input()
+            # if (myInput == 'quit'):
+            #     break
             titles_abstracts = self.getTitles_Abstracts(htmlunicode)
 
             for index in range(len(titles_abstracts)):
                 print u"第", self.page + 1, "页第", index + 1, "个搜索结果..."
+                print u'写入第', self.count + 1, u'个结果.'
                 print u"标题: ", titles_abstracts[index][0]
                 print u"摘要: ", titles_abstracts[index][1]
                 print u"链接: ", titles_abstracts[index][2]
-                print "\r\n"
-            for index in range(len(titles_abstracts)):
-                print u'写入第', self.count + 1, u'个结果.'
-                outputSheet.write(self.count + 1, 0, titles_abstracts[index][0])
-                outputSheet.write(self.count + 1, 1, titles_abstracts[index][1])
-                outputSheet.write(self.count + 1, 2, titles_abstracts[index][2])
+                # add new sheet
+                if (self.count != 0) and (self.count % self.sheetSplit == 0):
+                    self.sheetPage += 1
+                    sheetName = 'news' + str(self.sheetPage + 1)
+                    outputSheet = outputBook.add_sheet(sheetName, cell_overwrite_ok=True)
+                    # write the first line
+                    outputSheet.write(0, 0, u"标题")
+                    outputSheet.write(0, 1, u"摘要")
+                    outputSheet.write(0, 2, u"链接")
+
+                outputRow = self.count % self.sheetSplit + 1
+                outputSheet.write(outputRow, 0, titles_abstracts[index][0])
+                outputSheet.write(outputRow, 1, titles_abstracts[index][1])
+                outputSheet.write(outputRow, 2, titles_abstracts[index][2])
                 self.count += 1
+                print "\r\n"
 
             nextPageUrl = self.getNextPageUrl(htmlunicode)
             self.page += 1
             # print u'下一页url为:', nextPageUrl
-            if (nextPageUrl == ''):
+            if (nextPageUrl == '') or (self.count > self.maxCount):
                 break
 
             resp = requests.get(nextPageUrl)
