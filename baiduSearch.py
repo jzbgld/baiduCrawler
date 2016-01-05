@@ -12,6 +12,7 @@ class baidu_Search:
     def __init__(self):
         self.enable = True
         self.page = 0
+        self.count = 0
 
     # remove empty tags
     def rmTags(self, str):
@@ -91,6 +92,13 @@ class baidu_Search:
 
         # write to excel workbook
         outputBook = xlwt.Workbook(encoding='utf-8', style_compression=0)
+        # add a new sheet
+        sheetName = 'news' + str(self.page + 1)
+        outputSheet = outputBook.add_sheet(sheetName, cell_overwrite_ok=True)
+        # write the first line
+        outputSheet.write(0, 0, u"标题")
+        outputSheet.write(0, 1, u"摘要")
+        outputSheet.write(0, 2, u"链接")
 
         pagesCount = self.getPageCounts(htmlunicode)
         print pagesCount
@@ -101,13 +109,7 @@ class baidu_Search:
             if (myInput == 'quit'):
                 break
             titles_abstracts = self.getTitles_Abstracts(htmlunicode)
-            # add a new sheet
-            sheetName = 'news' + str(self.page + 1)
-            outputSheet = outputBook.add_sheet(sheetName, cell_overwrite_ok=True)
-            # write the first line
-            outputSheet.write(0, 0, u"标题")
-            outputSheet.write(0, 1, u"摘要")
-            outputSheet.write(0, 2, u"链接")
+
             for index in range(len(titles_abstracts)):
                 print u"第", self.page + 1, "页第", index + 1, "个搜索结果..."
                 print u"标题: ", titles_abstracts[index][0]
@@ -115,9 +117,11 @@ class baidu_Search:
                 print u"链接: ", titles_abstracts[index][2]
                 print "\r\n"
             for index in range(len(titles_abstracts)):
-                outputSheet.write(index + 1, 0, titles_abstracts[index][0])
-                outputSheet.write(index + 1, 1, titles_abstracts[index][1])
-                outputSheet.write(index + 1, 2, titles_abstracts[index][2])
+                print u'写入第', self.count + 1, u'个结果.'
+                outputSheet.write(self.count + 1, 0, titles_abstracts[index][0])
+                outputSheet.write(self.count + 1, 1, titles_abstracts[index][1])
+                outputSheet.write(self.count + 1, 2, titles_abstracts[index][2])
+                self.count += 1
 
             nextPageUrl = self.getNextPageUrl(htmlunicode)
             self.page += 1
